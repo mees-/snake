@@ -1,0 +1,32 @@
+{
+  "name": "snake",
+  "version": "1.0.0",
+  "main": "index.js",
+  "license": "MIT",
+  "devDependencies": {
+    "babel-core": "^6.24.1",
+    "babel-eslint": "^7.2.1",
+    "babel-loader": "^6.4.1",
+    "eslint": "^3.19.0",
+    "eslint-config-mees": "^3.5.4",
+    "webpack": "^2.3.3"
+  },
+  "eslintConfig": {
+    "extends": [
+      "mees"
+    ],
+    "env": {
+      "browser": true,
+      "node": true
+    }
+  },
+  "babel": {
+    "presets": [
+      ["env", {
+        "targets": {
+          "browsers": ["> 2%"]
+        }
+      }]
+    ]
+  }
+}
