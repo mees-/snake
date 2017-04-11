@@ -1,6 +1,28 @@
 <html>
   <body>
-    <canvas id='canvas'></canvas>
+    <h1>Snake!</h1><br />
+    <p>score: <p id='score'></p></p>
+
+    <canvas id='game'></canvas>
   </body>
+  <style>
+    @font-face {
+      font-family: editundo;
+      src: url(editundo.ttf);
+    }
+    h1, p {
+      font-family: editundo;
+      margin: 0;
+      padding: 0;
+    }
+    body {
+      text-align: center;
+    }
+    #game {
+      border: 3px black solid;
+      height: 600px;
+      width: 1000px;
+    }
+  </style>
   <script type='text/javascript' src='/bundle.js'></script>
 </html>

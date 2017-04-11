@@ -14,5 +14,10 @@ module.exports = {
         ]
       }
     ]
-  }
+  },
+  devServer: {
+    contentBase: resolve('./src'),
+    port: 8080
+  },
+  devtool: 'source-map'
 }
