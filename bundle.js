@@ -91,28 +91,38 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
-var colors = {
-  background: 'white',
-  snake: 'red',
-  snakeHead: 'blue',
-  food: 'green'
+var defaultOptions = {
+  colors: {
+    background: 'white',
+    snake: 'red',
+    snakeHead: 'blue',
+    food: 'green'
+  },
+  startSpeed: 200,
+  foodAmount: 3,
+  snakeAmount: 1,
+  cellSize: 10
 };
 
 var Game = function () {
-  function Game(canvas, size) {
+  function Game(canvas, options) {
     var _this = this;
-
-    var speed = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : 400;
 
     _classCallCheck(this, Game);
 
+    var opts = Object.assign({}, defaultOptions, options);
+    Object.assign(opts.colors, defaultOptions.colors, options.colors);
     this.ondie = null;
     this.ontick = null;
-    this.view = new _View2.default(canvas, size);
+    this.view = new _View2.default(canvas, opts.cellSize);
     this.snake = new _Snake2.default(this.view.center());
-    this.speed = speed;
+    this.speed = opts.startSpeed;
+    this.startSpeed = opts.startSpeed;
     this.foods = [];
-    this._interval = null;
+    this.foodAmount = opts.foodAmount;
+    this._nextTick = null;
+    this.colors = opts.colors;
+
     // bind to keydown
     window.onkeydown = function (_ref) {
       var keyCode = _ref.keyCode;
@@ -134,10 +144,10 @@ var Game = function () {
         default:
       }
       if (typeof direction === 'string' && !_this.snake.dead) {
-        // we change direction
+        // change direction
         _this.snake.direction = direction;
-        clearInterval(_this._interval);
-        _this._interval = null;
+        clearTimeout(_this._nextTick);
+        _this._nextTick = null;
         _this.start();
         // also tick once to make the direction change instant
         _this.tick();
@@ -151,12 +161,19 @@ var Game = function () {
       if (typeof this.ontick === 'function') {
         this.ontick(this);
       }
-      while (this.foods.length < 3) {
+      while (this.foods.length < this.foodAmount) {
+        console.log;
         this.foods.push([generateRandom(this.view.grid.width - 1), generateRandom(this.view.grid.height - 1)]);
       }
       try {
         // internally move snake
-        this.snake.move();
+        var newCell = this.snake.move();
+        if (newCell[0] < 0 || newCell[0] > this.view.grid.width || newCell[1] < 0 || newCell[1] > this.view.grid.height) {
+          this.stop();
+          if (typeof this.ondie === 'function') {
+            this.ondie(this);
+          }
+        }
       } catch (e) {
         if (this.snake.dead) {
           this.stop();
@@ -168,7 +185,7 @@ var Game = function () {
         }
       }
       // redraw view
-      this.view.fill(colors.background);
+      this.view.fill(this.colors.background);
       // render snake
       var _iteratorNormalCompletion = true;
       var _didIteratorError = false;
@@ -178,7 +195,7 @@ var Game = function () {
         for (var _iterator = this.snake.body[Symbol.iterator](), _step; !(_iteratorNormalCompletion = (_step = _iterator.next()).done); _iteratorNormalCompletion = true) {
           var part = _step.value;
 
-          this.view.grid[part[0]][part[1]].color = colors.snake;
+          this.view.grid[part[0]][part[1]].color = this.colors.snake;
         }
         // recolor the head
       } catch (err) {
@@ -197,15 +214,16 @@ var Game = function () {
       }
 
       var head = this.snake.head();
-      this.view.grid[head[0]][head[1]].color = colors.snakeHead;
+      this.view.grid[head[0]][head[1]].color = this.colors.snakeHead;
       // check if we ate a food else render it
       for (var i = 0; i < this.foods.length; i++) {
         var food = this.foods[i];
         if (this.snake.head()[0] === food[0] && this.snake.head()[1] === food[1]) {
           this.foods.splice(i, 1);
           this.snake.grow();
+          this.speed = this.startSpeed * (1 / (0.5 * Math.sqrt(this.snake.body.length)));
         } else {
-          this.view.grid[food[0]][food[1]].color = colors.food;
+          this.view.grid[food[0]][food[1]].color = this.colors.food;
         }
       }
 
@@ -215,13 +233,20 @@ var Game = function () {
   }, {
     key: 'start',
     value: function start() {
+      if (this._nextTick === null) {
+        this.autoTick();
+      }
+    }
+  }, {
+    key: 'autoTick',
+    value: function autoTick() {
       var _this2 = this;
 
-      if (this._interval === null) {
-        this._interval = setInterval(function () {
-          _this2.tick();
-        }, this.speed);
-      }
+      // set timeout for next tick
+      this._nextTick = setTimeout(function () {
+        _this2.tick();
+        _this2.autoTick();
+      }, this.speed);
     }
   }, {
     key: 'reset',
@@ -231,15 +256,15 @@ var Game = function () {
   }, {
     key: 'stop',
     value: function stop() {
+      clearTimeout(this._nextTick);
+      this._nextTick = null;
       this.view.fill('white');
-      clearInterval(this._interval);
-      this._interval = null;
     }
   }, {
     key: 'pause',
     value: function pause() {
-      clearInterval(this._interval);
-      this._interval = null;
+      clearTimeout(this._nextTick);
+      this.nextTick = null;
     }
   }]);
 
@@ -345,7 +370,7 @@ var Snake = function () {
     key: 'rawMove',
     value: function rawMove(newCell) {
       var idx = this.indexOf(newCell);
-      if (idx >= 0 || newCell[0] < 0 || newCell[1] < 0) {
+      if (idx >= 0) {
         this.dead = true;
         var err = new Error('Moved into self');
         err.snake = true;
@@ -357,6 +382,8 @@ var Snake = function () {
       } else {
         this.toGrow--;
       }
+
+      return newCell;
     }
   }, {
     key: 'grow',
@@ -400,7 +427,8 @@ var Snake = function () {
           break;
         default:
       }
-      this.rawMove(newCell);
+
+      return this.rawMove(newCell);
     }
   }, {
     key: 'indexOf',
@@ -569,7 +597,11 @@ var canvas = document.getElementById('game');
 canvas.height = 600;
 canvas.width = 990;
 
-var game = new _Game2.default(canvas, 15);
+var game = new _Game2.default(canvas, {
+  startSpeed: 350,
+  cellSize: 15,
+  foodAmount: 10
+});
 window.game = game;
 game.ondie = function () {
   var ctx = canvas.getContext('2d');
