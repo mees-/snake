@@ -9,9 +9,7 @@ export default class Snake {
 
   rawMove(newCell) {
     const idx = this.indexOf(newCell)
-    if ((idx >= 0) ||
-    newCell[0] < 0 ||
-    newCell[1] < 0) {
+    if (idx >= 0) {
       this.dead = true
       const err = new Error('Moved into self')
       err.snake = true
@@ -23,6 +21,8 @@ export default class Snake {
     } else {
       this.toGrow--
     }
+
+    return newCell
   }
 
   grow(n = 1) {
@@ -58,7 +58,8 @@ export default class Snake {
         break
       default:
     }
-    this.rawMove(newCell)
+
+    return this.rawMove(newCell)
   }
 
   indexOf(cell) {

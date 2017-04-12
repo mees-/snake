@@ -3,7 +3,11 @@ const canvas = document.getElementById('game')
 canvas.height = 600
 canvas.width = 990
 
-const game = new Game(canvas, 15)
+const game = new Game(canvas, {
+  startSpeed: 350,
+  cellSize: 15,
+  foodAmount: 10
+})
 window.game = game
 game.ondie = () => {
   const ctx = canvas.getContext('2d')
